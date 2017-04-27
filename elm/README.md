@@ -273,7 +273,7 @@ List.head patients
     |> Maybe.withDefault "default
 ```
 
-### Always use [`Json.Decode.Pipeline`](https://github.com/NoRedInk/elm-decode-pipeline) instead of [`mapN`](http://package.elm-lang.org/packages/elm-lang/core/latest/Json-Decode#map2)
+### Always use [`Json.Decode.Pipeline`](https://github.com/NoRedInk/elm-decode-pipeline)
 
 Even though this would work...
 
@@ -281,16 +281,14 @@ Even though this would work...
 -- Don't do this --
 algoliaResult : Decoder AlgoliaResult
 algoliaResult =
-  map6 AlgoliaResult
-    (field "id" int)
-    (field "name" string)
-    (field "address" string)
-    (field "city" string)
-    (field "state" string)
-    (field "zip" string)
+  succeed AlgoliaResult
+    |: ("id" := int)
+    |: ("name" := string)
+    |: ("address" := string)
+    |: ("city" := string)
+    |: ("state" := string)
+    |: ("zip" := string)
 ```
-
-...it's inconsistent with the longer decoders, and must be refactored if we want to add more fields.
 
 Instead do this from the start:
 
