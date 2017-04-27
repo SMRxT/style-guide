@@ -80,8 +80,6 @@ Make as much of this opensource-ready as possible:
 - Must have simple documentation explaining how to use the component. No need to go overboard, but it needs to be there. Imagine you're publishing the package on elm-package! Use `--warn` to get errors for missing documentation.
 - Expose Model and the Msg constructors.
 - Use `type alias Model a = { a | b : c }` to allow extending of things.
-- Provide an API file as example usage of the module.
-- Follow either the [elm-api-component](https://github.com/NoRedInk/elm-api-components) pattern, or the [elm-html-widgets](https://github.com/NoRedInk/elm-html-widgets) pattern
 
 #### Examples
 - Paging
@@ -108,11 +106,11 @@ Inside **`View.elm`**, we define the view for our model and set up any event han
 
 It calls `Html.programWithFlags` with:
 - `init`, defined in `Main`, runs `Flags.decodeFlags` and turns the resulting `Flags` type into a `Model`.
-- `update` is `Update.update >> batchUpdate`. See [NoRedInk/rocket-update](https://github.com/NoRedInk/rocket-update) for details on `batchUpdate`.
-- `view` is simply `View.view`.
+- `update` is `Update.update`.
+- `view` is `View.view`.
 - `subscriptions`, defined in `Main`, contains any subscriptions this app relies on.
 
-Additionally we setup ports for interop with JS in this file. We run elm-make on this file to generate a JS file that we can include elsewhere.
+Additionally we setup ports for interop with JS in this file.
 
 To summarize:
 
@@ -143,10 +141,6 @@ To summarize:
 
 ## Ports
 
-### All ports should bring things in as `Json.Value`
-
-The single source of runtime errors that we have right now are through ports receiving values they shouldn't. If a `port something : Signal Int` receives a float, it will cause a runtime error. We can prevent this by just wrapping the incoming things as `Json.Value`, and handle the errorful data through a `Decoder` result instead.
-
 ### Ports should always have documentation
 
 I don't want to have to go out from our Elm files to find where a port is being used most of the time. Simply adding a line or two explaining what the port triggers, or where the values coming in from a port can help a lot.
@@ -161,42 +155,42 @@ For example, an assignment should not have a `openPopout` attribute. Doing so me
 
 ## Naming
 
-### Use descriptive names instead of tacking on underscores
+### Use descriptive names instead of using underscores
 
 Instead of this:
 
 ```elm
 -- Don't do this --
-markDirty model =
+updateModel model value =
   let
     model_ =
-      { model | dirty = True }
+      { model | setting = value }
   in
     model_
 ```
 
-...just come up with a name.
+...give it a meaningful name:
 
 ```elm
 -- Instead do this --
-markDirty model =
+updateModel model value =
   let
-    dirtyModel =
-      { model | dirty = True }
+    updatedModel =
+      { model | setting = value }
   in
-    dirtyModel
+    updatedModel
 ```
 
 ## Function Composition
 
-### Prefer forward application [`|>`](http://package.elm-lang.org/packages/elm-lang/core/latest/Basics#|>) "pipelines" to backward application
+### Prefer forward application [`|>`](http://package.elm-lang.org/packages/elm-lang/core/latest/Basics#|>) "pipelines" over backward application
 
 Instead of this:
 ```elm
 -- Don't do this --
 Maybe.withDefault "default" <| Maybe.map String.toUpper <| patient.alias
 ```
-...prefer using parentheses
+...use pipelines:
 ```elm
 -- Instead do this --
 patient.alias
@@ -214,7 +208,7 @@ Instead of this:
 foo <| bar <| baz qux
 ```
 
-...prefer using parentheses, because they'd look fine:
+...prefer using parentheses:
 
 ```elm
 -- Instead do this --
