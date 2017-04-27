@@ -1,2 +1,5 @@
-# style-guide
-Style guides for SMRxT.
+# SMRxT Style Guide
+
+## Languages
+
+* [Elm](elm/README.md)
