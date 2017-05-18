@@ -13,6 +13,7 @@ Inspired by and based on NoRedInk's [Style Guide](https://github.com/NoRedInk/el
 * [Function Composition](#function-composition)
 * [Syntax](#syntax)
 * [Consider refactoring if...](#Consider-refacotring-if...)
+* [General Guidelines](#general-guidelines)
 * [Tooling](#tooling)
 
 
@@ -351,6 +352,11 @@ The update function is especially prone to get longer and longer: keep it as sma
 
 Large `case..of` statements hurts compile time. It might be possible that some of your constructors can be combined, for example `type Msg = Open | Close` could actually be `type Msg = SetOpenState Bool`
 
+## General Guidelines
+
+### Only expose types, not functions
+
+Use fully-qualified names when calling functions. This helps with name collisions and it helps with navigation.
 
 ## Tooling
 
