@@ -6,6 +6,7 @@ Inspired by and based on NoRedInk's [Style Guide](https://github.com/NoRedInk/el
 
 * [How to Namespace Modules](#how-to-namespace-modules)
 * [How to Structure Modules for a Page](#how-to-structure-modules-for-a-page)
+* [Project Structure for an SPA](#project-structure-for-an-spa)
 * [Ports](#ports)
 * [Model](#model)
 * [Naming](#naming)
@@ -86,21 +87,30 @@ Make as much of this opensource-ready as possible:
 
 ## How to Structure Modules for a Page
 
-Our Elm apps generally take this form:
+### Smaller Pages
 
-- Main.elm
+- [Page].elm
+
+Just go ahead and grow the page inside a single file. For smaller pages, 
+it makes perfect sense to just keep the `Model`, `Msg`, `update`, and `view` all nearby.
+When it starts to feel unweildy and hard to find pieces of the page, break it out into
+multiple pages.
+
+### Larger pages
+
+Our large Elm pages generally take this form:
+
 - Model.elm
 - Update.elm
 - View.elm
-- Flags.elm
+- Main.elm (when using a polyglot)
+- Flags.elm (for non-SPAs, can include in the Main)
 
 Inside **`Model.elm`**, we contain the actual model for the view state of our program. Note that we generally don't include non-view state inside here, preferring to instead generalize things away from the view where possible. For example, we might have a record with a list of assignments in our `Model` file, but the assignment type itself would be in a module called `Data.Assignment`.
 
 **`Update.elm`** contains our update code. This includes the `Msg` types for our view. Inside here most of our business logic lives.
 
 Inside **`View.elm`**, we define the view for our model and set up any event handlers we need.
-
-**`Flags.elm`** contains a decoder for the flags of the app. We aim to keep our decoders basic and so decode into a special `Flags` type that mirrors the structure of the raw JSON instead of the structure of the `Model` type. The `Flags` and `Model` modules should not depend on each other.
 
 **`Main.elm`** is our entry file. Here, we import everything from the other files and actually connect everything together.
 
@@ -112,12 +122,11 @@ It calls `Html.programWithFlags` with:
 
 Additionally we setup ports for interop with JS in this file.
 
-To summarize:
+When building an SPA, there will only be a single `Main` and it will have a [slightly different role](#building-an-spa).
 
-- Main.elm
-    - Our entry point. Decodes the flags, creates the initial model, calls `Html.programWithFlags` and sets up ports.
-    - Compile target for `elm-make`
-    - Imports `Model`, `Update`, `View` and `Flags`.
+**`Flags.elm`** contains a decoder for the flags of the app. We aim to keep our decoders basic and so decode into a special `Flags` type that mirrors the structure of the raw JSON instead of the structure of the `Model` type. The `Flags` and `Model` modules should not depend on each other.
+
+To summarize:
 
 - Model.elm
     - Contains the `Model` type for the view alone.
@@ -134,10 +143,23 @@ To summarize:
     - Imports `Model` and `Update` (for the `Msg` types)
     - Exports `view : Model -> Html Msg`
 
+- Main.elm
+    - Our entry point. Decodes the flags, creates the initial model, calls `Html.programWithFlags` and sets up ports.
+    - Compile target for `elm-make`
+    - Imports `Model`, `Update`, `View` and `Flags`.
+
+
 - Flags.elm
     - Contains the flags decoder
     - Imports nothing but generalized decoders.
     - Exports `Flags`, `decodeFlags : String -> Result String Flags`
+
+## Project Structure for an SPA
+
+SPAs break the usual project structure. In general, we folow many of the 
+principles from the [Real World Example](https://github.com/rtfeldman/elm-spa-example).
+We handle a few things differently...
+
 
 ## Ports
 
