@@ -204,6 +204,36 @@ updateModel model value =
     updatedModel
 ```
 
+### When naming Json decoders, begin with the type being decoded, followed by `decoder`.
+
+```
+algoliaDecoder : Json.Decoder Algolia
+```
+
+### Do not create decoders with pluralized names for decoding lists, the calling function should explicitly use Json.list.
+
+Instead of this:
+
+```elm
+-- Don't do this --
+algoliasDecoder : Json.Decoder (List Algolia)
+algoliasDecoder =
+    Json.List ...
+```
+
+...do this:
+
+```elm
+-- Instead do this --
+algoliaDecoder : Json.Decoder Algolia
+algoliaDecoder =
+    ...
+
+...
+    |> required "list_of_algolias" (Json.list algoliaDecoder)
+```
+
+
 ## Function Composition
 
 ### Prefer forward application [`|>`](http://package.elm-lang.org/packages/elm-lang/core/latest/Basics#|>) "pipelines" over backward application
