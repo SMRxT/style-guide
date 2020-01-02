@@ -19,8 +19,8 @@ Inspired by and based on NoRedInk's [Style Guide](https://github.com/NoRedInk/el
 
 ## How to Namespace Modules
 
-### `Common.`
-`Common.Form`, `Common.DailyCalendar`, `Common.ExplainerWell`
+### `Views.`
+`Views.Form`, `Views.DailyCalendar`, `Views.ExplainerWell`
 
 View functions which can be shared across pages. Modules here are specific to our product and our styles.
 
@@ -75,7 +75,7 @@ Each `Routes` Module represents a base-level piece of a URL. Routes should be cr
 ### Top-level modules
 `Paging`
 
-Something reusable that we might open source, that aren't tied directly to any SMRxT stuff. Name it what we'd name it if we'd already open-sourced it.
+Something reusable that we might open source, that aren't tied directly to any SMRxT stuff. Give it a name that would make sense for the package as if we have already open-sourced it.
 
 Make as much of this opensource-ready as possible:
 
@@ -99,61 +99,12 @@ multiple pages.
 
 ### Larger pages
 
-Our large Elm pages generally take this form:
-
-- Model.elm
-- Update.elm
-- View.elm
-- Main.elm (when using a polyglot)
-- Flags.elm (for non-SPAs, can include in the Main)
-
-Inside **`Model.elm`**, we contain the actual model for the view state of our program. Note that we generally don't include non-view state inside here, preferring to instead generalize things away from the view where possible. For example, we might have a record with a list of assignments in our `Model` file, but the assignment type itself would be in a module called `Data.Assignment`.
-
-**`Update.elm`** contains our update code. This includes the `Msg` types for our view. Inside here most of our business logic lives.
-
-Inside **`View.elm`**, we define the view for our model and set up any event handlers we need.
-
-**`Main.elm`** is our entry file. Here, we import everything from the other files and actually connect everything together.
-
-It calls `Html.programWithFlags` with:
-- `init`, defined in `Main`, runs `Flags.decodeFlags` and turns the resulting `Flags` type into a `Model`.
-- `update` is `Update.update`.
-- `view` is `View.view`.
-- `subscriptions`, defined in `Main`, contains any subscriptions this app relies on.
-
-Additionally we setup ports for interop with JS in this file.
-
-When building an SPA, there will only be a single `Main` and it will have a [slightly different role](#building-an-spa).
-
-**`Flags.elm`** contains a decoder for the flags of the app. We aim to keep our decoders basic and so decode into a special `Flags` type that mirrors the structure of the raw JSON instead of the structure of the `Model` type. The `Flags` and `Model` modules should not depend on each other.
-
-To summarize:
-
-- Model.elm
-    - Contains the `Model` type for the view alone.
-    - Imports nothing but generalized types that are used in the model
-    - Exports `Model`
-
-- Update.elm
-    - Contains the `Msg` type for the view, and the update function.
-    - Imports `Model`
-    - Exports `update : Msg -> Model -> (Model, List (Cmd Msg))` and `Msg`
-
-- View.elm
-    - Contains the view code
-    - Imports `Model` and `Update` (for the `Msg` types)
-    - Exports `view : Model -> Html Msg`
-
-- Main.elm
-    - Our entry point. Decodes the flags, creates the initial model, calls `Html.programWithFlags` and sets up ports.
-    - Compile target for `elm-make`
-    - Imports `Model`, `Update`, `View` and `Flags`.
+Don't break out large files into Model, Update, and View gratuitously. They should exist together in one file. Decompose problems on the boundaries of types. If a particular type has operations around it, break those out into a separate file. Large Elm files aren't as unwieldy as large files in other languages.
 
 
-- Flags.elm
-    - Contains the flags decoder
-    - Imports nothing but generalized decoders.
-    - Exports `Flags`, `decodeFlags : String -> Result String Flags`
+#### Resources
+[Evan - Life of a file](https://www.youtube.com/watch?v=XpDsk374LDE&feature=youtu.be)
+
 
 ## Project Structure for an SPA
 
@@ -204,10 +155,13 @@ updateModel model value =
     updatedModel
 ```
 
-### When naming Json decoders, begin with the type being decoded, followed by `decoder`.
+### JSON decoders for the type of the file name (ie, the decoder for a Device in Types.Device) should just be named decoder. Helper decoders and other decoders in the file should begin with the type being decoded followed by `decoder`.
 
 ```
-algoliaDecoder : Json.Decoder Algolia
+...Types.Device...
+decoder : Decoder Device
+
+attributesDecoder : Json.Decoder Attributes
 ```
 
 ### Do not create decoders with pluralized names for decoding lists, the calling function should explicitly use Json.list.
@@ -216,8 +170,8 @@ Instead of this:
 
 ```elm
 -- Don't do this --
-algoliasDecoder : Json.Decoder (List Algolia)
-algoliasDecoder =
+devicesDecoder : Json.Decoder (List Device)
+devicesDecoder =
     Json.List ...
 ```
 
@@ -225,12 +179,12 @@ algoliasDecoder =
 
 ```elm
 -- Instead do this --
-algoliaDecoder : Json.Decoder Algolia
-algoliaDecoder =
+deviceDecoder : Json.Decoder Device
+deviceDecoder =
     ...
 
 ...
-    |> required "list_of_algolias" (Json.list algoliaDecoder)
+    |> required "list_of_devices" (Json.list deviceDecoder)
 ```
 
 
@@ -320,7 +274,7 @@ List.head patients
     |> Maybe.withDefault "default
 ```
 
-### Always use [`Json.Decode.Pipeline`](https://github.com/NoRedInk/elm-decode-pipeline)
+### Always use [`Json.Decode.Pipeline`](https://package.elm-lang.org/packages/NoRedInk/elm-json-decode-pipeline/latest)
 
 Even though this would work...
 
@@ -329,23 +283,23 @@ Even though this would work...
 algoliaResult : Decoder AlgoliaResult
 algoliaResult =
   succeed AlgoliaResult
-    |: ("id" := int)
-    |: ("name" := string)
-    |: ("address" := string)
-    |: ("city" := string)
-    |: ("state" := string)
-    |: ("zip" := string)
+    |> (field "id" int)
+    |> (field "name" string)
+    |> (field "address" string)
+    |> (fied "city" string)
+    |> (field "state" string)
+    |> (field "zip" string)
 ```
 
 Instead do this from the start:
 
 ```elm
 -- Instead do this --
-import Json.Decode.Pipeline exposing (required, decode)
+import Json.Decode.Pipeline exposing (required)
 
 algoliaResult : Decoder AlgoliaResult
 algoliaResult =
-  decode AlgoliaResult
+  succeed AlgoliaResult
     |> required "id" int
     |> required "name" string
     |> required "address" string
@@ -354,7 +308,6 @@ algoliaResult =
     |> required "zip" string
 ```
 
-This will also make it easier to add [optional fields](http://package.elm-lang.org/packages/NoRedInk/elm-decode-pipeline/latest/Json-Decode-Pipeline#optional) where necessary.
 
 [json2elm](http://json2elm.org/) can generate pipeline-style decoders from
 raw JSON and convert from other/older styles of decoders.
